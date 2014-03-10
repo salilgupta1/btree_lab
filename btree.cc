@@ -240,7 +240,10 @@ ERROR_T BTreeIndex::LookupOrUpdateInternal(const SIZE_T &node,
 	} else { 
 	  // BTREE_OP_UPDATE
 	  // WRITE ME
-	  return ERROR_UNIMPL;
+        rc = b.SetVal(offset, value);
+        if(rc) {return rc;}
+        rc = b.Serialize(buffercache, node);
+        return rc;
 	}
       }
     }
@@ -362,7 +365,9 @@ ERROR_T BTreeIndex::Insert(const KEY_T &key, const VALUE_T &value)
 ERROR_T BTreeIndex::Update(const KEY_T &key, const VALUE_T &value)
 {
   // WRITE ME
-  return ERROR_UNIMPL;
+    VALUE_T val = value;
+    return LookupOrUpdateInternal(superblock.info.rootnode, BTREE_OP_UPDATE, key, val);
+    return ERROR_NOERROR;
 }
 
   
