@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <math.h>
 #include "btree.h"
 
 KeyValuePair::KeyValuePair()
@@ -461,15 +462,90 @@ ERROR_T BTreeIndex::Display(ostream &o, BTreeDisplayType display_type) const
 
 ERROR_T BTreeIndex::SanityCheck() const
 {
-  // WRITE ME
-  return ERROR_UNIMPL;
+      ERROR_T rc;
+    SIZE_T totalKeys;
+    // Check if keys in order within node
+    // Also, count up keys in leaf nodes
+    rc=NodeCheck(superblock.info.rootnode, totalKeys);
+    if(rc){
+        return rc;
+    }
+    // return insane tree when totalkeys in leaf nodes isn't the same as the numkeys of superblock
+    if (totalKeys != superblock.info.numkeys) {
+        return ERROR_INSANE;
+    }
+    return ERROR_NOERROR;
 }
-  
+
+ERROR_T BTreeIndex::NodeCheck(const SIZE_T &node, SIZE_T &totalKeys) const
+{
+
+    return ERROR_NOERROR;
+    KEY_T key;
+    SIZE_T ptr;
+    KEY_T prev;
+    SIZE_T offset;
+    int first=1;
+    ERROR_T rc;
+    BTreeNode b;
+    totalKeys = 0;
+
+    rc= b.Unserialize(buffercache,node);
+    if(rc) {
+        return rc;
+    }
+    switch(b.info.nodetype){
+        case BTREE_ROOT_NODE:
+        case BTREE_INTERIOR_NODE:
+            if ((int)(b.info.GetNumSlotsAsInterior()*(2./3.)) <= b.info.numkeys) { 
+                return ERROR_INSANE;
+            }
+            if (b.info.numkeys>0) {
+                for (offset=0;offset<=b.info.numkeys;offset++) {
+                    // Recurse down
+                    rc=b.GetPtr(offset,ptr);
+                    if (rc) { return rc; }
+                    rc=NodeCheck(ptr,totalKeys);
+                    if (rc) { return rc; }
+                  }
+            }
+            return ERROR_NOERROR;
+            break;
+        case BTREE_LEAF_NODE:
+            if ((int)(b.info.GetNumSlotsAsLeaf()*(2./3.)) <= b.info.numkeys){
+                return ERROR_INSANE;
+            }
+            if (b.info.numkeys>0) {
+                // keep track of number of keys
+                totalKeys += b.info.numkeys;
+                for (offset=0;offset<=b.info.numkeys;offset++) {
+                    rc=b.GetKey(offset,key);
+                    if ( rc ) { return rc; }
+                    if(first==1)
+                    {
+                        prev = key; first = 0;
+                    } 
+                    else 
+                    {if( prev==key|| prev<key){
+                            prev=key;
+                        }
+                        else
+                        {return ERROR_INSANE;}
+                    }
+                }
+            }
+            return ERROR_NOERROR;
+            break;
+        default:
+      return ERROR_NOERROR;
+    }
+}
 
 
 ostream & BTreeIndex::Print(ostream &os) const
 {
   // WRITE ME
+  Display(os, BTREE_SORTED_KEYVAL);
   return os;
 }
 

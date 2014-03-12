@@ -125,6 +125,10 @@ public:
   // a valid use ratio?
   ERROR_T SanityCheck() const;
 
+  // looks for nodes in order
+  // also keeps track of keys in leaves
+  ERROR_T NodeCheck(const SIZE_T&, SIZE_T&) const;
+
   // Display tree
   // BTREE_DEPTH means to do a depth first traversal of 
   // the tree, printing each node
