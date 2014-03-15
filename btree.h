@@ -99,12 +99,19 @@ public:
   // We expect you to tell us the number of your superblock, which
   // we will return to you on the next attach
   ERROR_T Detach(SIZE_T &initblock);
-  
+
   // return zero on success
   // return ERROR_NOSPACE if you run out of disk space
   // return ERROR_SIZE if the key or value are the wrong size for this index
   // return ERROR_CONFLICT if the key already exists and it's a unique index
   ERROR_T Insert(const KEY_T &key, const VALUE_T &value);
+
+  // Insert Helper functions
+  ERROR_T AddKeyValuePair(const SIZE_T node, const KEY_T &key, const VALUE_T &value, SIZE_T newNode);
+  ERROR_T SplitNode(const SIZE_T node, SIZE_T &newNode, KEY_T &splitKey);
+  ERROR_T RecursivePlacement(SIZE_T node, SIZE_T parent, const KEY_T &key, const VALUE_T &value);
+  bool IsNodeFull(const SIZE_T node);
+  
   
   // return zero on success
   // return ERROR_NONEXISTENT  if the key doesn't exist
